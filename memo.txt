@@ -1,0 +1,14 @@
+https://www.kongregate.com/games/e_cha/territory-idle/embed
+に
+https://game299284.konggames.com/gamez/0029/9284/live/kongregate_shell.html
+https://game299284.konggames.com/gamez/0029/9284/live/game.html
+https://game299284.konggames.com/gamez/0029/9284/live/html5game/TerritoryIdl2_2.js
+
+が書いてあった．ソースコードあり
+
+ローカルの場所
+/home/yuta-harimoto/.local/share/Steam/steamapps/common/Territory Idle/
+
+download.pyで落としてきたのはverion 165fix最新が167でbugfix分の差分のみで，ほぼ同じ
+python -m http.server 8000
+ブラウザでhttp://localhost:8000/game.html を開く

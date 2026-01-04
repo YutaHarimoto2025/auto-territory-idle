@@ -1,0 +1,11 @@
+logging_variables:
+  # resorces
+  wheat: { var: "_1f", scope: "main" }
+  wood:  { var: "_2f", scope: "main" }
+  stone: { var: "_3f", scope: "main" }
+  faith: { var: "_ld", scope: "main" }
+  fame:  { var: "_Gc", scope: "main" }
+  gold:  { var: "_fd", scope: "global" }
+
+  # view / camera
+  scale: { var: "_0o", scope: "main" }
