@@ -6,22 +6,25 @@ import pandas as pd
 import git
 from pathlib import Path
 from datetime import datetime
-from playwright.sync_api import sync_playwright, Playwright
+import numpy as np
+from playwright.sync_api import sync_playwright, Playwright, Page
 
-from src import (Coordinater, ConsoleHandler)
+from src import (Coordinater, ConsoleHandler, ActionHandler)
 
 class GameProcessor:
     def __init__(self):
         git_repo = git.Repo(Path(__file__).resolve(), search_parent_directories=True)
         working_dir = Path(git_repo.working_tree_dir)
         self.coordinater = Coordinater(working_dir)
-        self.console_handler = ConsoleHandler(working_dir)
+        self.console_handler = ConsoleHandler(working_dir, self.coordinater)
         
         # 3. Playwrightの開始
         self._pw: Playwright = sync_playwright().start()
         self.browser = self._pw.chromium.launch(headless=False, args=["--start-maximized"])
         self.context = self.browser.new_context(no_viewport=True)
-        self.page = self.context.new_page()
+        self.page: Page = self.context.new_page()
+        
+        self.action_handler = ActionHandler(self.page, self.coordinater)
         
         # コンソールリスナーの登録
         self.page.on("console", self.console_handler.console_step) #第一引数に ConsoleMessage を受け取る
@@ -45,10 +48,6 @@ class GameProcessor:
         self.page.evaluate(injection_js)
         print("監視スクリプトを注入しました。")
         time.sleep(1) # 注入後の安定待ち
-
-    # def action(self, action_type: str):
-        
-    #     return result
             
     def close(self):
         print("ブラウザを終了します。")
@@ -62,7 +61,29 @@ if __name__ == "__main__":
     # 1. 起動と注入
     proc.setup()
 
-    # 2. アクションの実行
+
+    proc.action_handler.click_world(0.28, 0.14)  
+    proc.action_handler.click_world(0.28, 0.14)  
+    proc.action_handler.click_world(0.4, 0.28)  
+    proc.action_handler.click_world(0.4, 0.28) 
+    
+    proc.action_handler.drag_world(-1, 0)
+    proc.action_handler.zoom_out(times=12)
+    
+    time.sleep(2)  
+    proc.action_handler.zoom_in(times=15)
+    
+    proc.action_handler.drag_world(0.88, 0.7)
+    
+    # -10, 10の間の乱数でランダムに10回クリック
+    np_rand_arr = np.random.uniform(-10, 10, size=(5, 2))
+    proc.action_handler.click_world_points(np_rand_arr.tolist())
+        
+    
+    proc.action_handler.click_world_points([ (0.0, 0.0)])
+    
+    
+
 
     # 3. メインループ（監視継続）
     print("監視中... (results フォルダにCSVが保存されています)")

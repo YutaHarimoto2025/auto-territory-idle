@@ -2,11 +2,15 @@ from pathlib import Path
 
 class Coordinater:
     def __init__(self, working_dir: Path):
+        #w座標はfloat, c座標はintで扱う
+        
         self.working_dir = working_dir
         # キャンバス設定
         self.canvas_width = 1000
         self.canvas_height = 800
         self._set_html(w=self.canvas_width, h=self.canvas_height)
+        self.click_range_x = (50, 950)  # C座標でのクリック可能x範囲
+        self.click_range_y = (90, 730)  # C座標でのクリック可能y範囲
         
         # W座標原点がC座標でどこか (Scale=100の時)
         self.base_origin_c_x = 300.0
@@ -16,8 +20,9 @@ class Coordinater:
         self.base_cell_size = 200.0
         
         # ズーム設定
-        self.scales = [42, 47, 51, 56, 62, 68, 75, 83, 91, 100]
+        self.scales = sorted([100 /(1.1**i) for i in range(10)])
         self.scale_index = 9  # デフォルトはScale=100
+        self.scale_index_lb_clicking = 7  # クリック操作に必要な最低ScaleIndex
         
         # 平行移動（W座標単位のオフセット）
         self.pan_w_x = 0.0
@@ -32,22 +37,22 @@ class Coordinater:
         """Scale / 100 の係数"""
         return self.current_scale / 100.0
 
-    def w_to_c(self, w_x, w_y):
+    def calc_w_to_c(self, w_x, w_y):
         """W座標(世界) -> C座標(キャンバス)"""
         # 計算式: C = (BaseOrigin * S) + (W - PanW) * (BaseCell * S)
         # 共通項 (S) でまとめると以下の通り
         c_x = self.s_factor * (self.base_origin_c_x + (w_x - self.pan_w_x) * self.base_cell_size)
         c_y = self.s_factor * (self.base_origin_c_y + (w_y - self.pan_w_y) * self.base_cell_size)
-        return c_x, c_y
+        return int(c_x), int(c_y)
 
-    def c_to_w(self, c_x, c_y):
+    def calc_c_to_w(self, c_x:int, c_y:int):
         """C座標(キャンバス) -> W座標(世界)"""
         # w_to_c の逆関数
         w_x = ((c_x / self.s_factor) - self.base_origin_c_x) / self.base_cell_size + self.pan_w_x
         w_y = ((c_y / self.s_factor) - self.base_origin_c_y) / self.base_cell_size + self.pan_w_y
         return w_x, w_y
 
-    def handle_drag(self, delta_c_x, delta_c_y):
+    def handle_drag(self, delta_c_x:int, delta_c_y:int):
         """
         マウスドラッグによる平行移動を処理
         delta_c: キャンバス上でのピクセル移動量

@@ -1,11 +1,17 @@
+from __future__ import annotations
 import json, os, yaml
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.coordinater import Coordinater
 
 class ConsoleHandler:
-    def __init__(self, working_dir:Path):
+    def __init__(self, working_dir:Path, coordinater:Coordinater):
         self.working_dir = working_dir
+        self.coordinater = coordinater
         
         # 2. 保存先の設定
         os.makedirs(self.working_dir / "results", exist_ok=True)
@@ -19,6 +25,7 @@ class ConsoleHandler:
             config = yaml.safe_load(f)
         self.mapping: dict = config['logging_variables']
         self.print_interval= 1000  # ミリ秒単位
+        self.accelaration_factor = 1  # 生産加速倍率
 
     def console_step(self, msg):
         """console.log から RL_DATA を抽出して処理"""
@@ -31,7 +38,7 @@ class ConsoleHandler:
                 float_data = {str(k): round(float(v), 1) for k, v in raw_data.items()}
                 
                 # --- 整形プリント出力 ---
-                print("\n--- Current Game State---")
+                print("\n [State] ", end="|")
                 keys = list(float_data.keys())
                 for i, k in enumerate(keys):
                     if i == len(keys) - 1: # 最後だけ末尾のパイプなし
@@ -43,10 +50,25 @@ class ConsoleHandler:
                 self._save_to_csv(float_data)
 
             except Exception as e:
-                pass 
+                print(f"Error processing RL_DATA: {e}") 
         
         if "CLICK_COORD:" in msg.text:
-            print(f"EVENT: {msg.text}")
+            try:
+                json_str = msg.text.split("CLICK_COORD:")[1].strip()
+                coord_data = json.loads(json_str)
+                
+                # Canvas座標を float として取得
+                c_x = float(coord_data.get("x", 0))
+                c_y = float(coord_data.get("y", 0))
+                
+                # Coordinator を使って World 座標へ変換
+                w_x, w_y = self.coordinater.calc_c_to_w(c_x, c_y)
+                
+                # 表示 (小数点1桁に丸める)
+                print(f"\n[Debug] Clicked on World : ({round(w_x, 2)}, {round(w_y, 2)}), Canvas: ({c_x}, {c_y})")
+                
+            except Exception as e:
+                print(f"Error parsing CLICK_COORD: {e}")
             
     def set_csv_header(self, header_str:str):
         """CSVヘッダーを設定"""
@@ -70,5 +92,6 @@ class ConsoleHandler:
             js_template = f.read()
         
         injection_js = js_template.replace("%MAPPING_JSON%", json.dumps(self.mapping)) \
-                                  .replace("%INTERVAL%", str(self.print_interval))
+                                  .replace("%INTERVAL%", str(self.print_interval)) \
+                                  .replace("%ACCELARATION%", str(self.accelaration_factor))
         return injection_js

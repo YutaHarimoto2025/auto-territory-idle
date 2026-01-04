@@ -12,3 +12,8 @@ https://game299284.konggames.com/gamez/0029/9284/live/html5game/TerritoryIdl2_2.
 download.pyで落としてきたのはverion 165fix最新が167でbugfix分の差分のみで，ほぼ同じ
 python -m http.server 8000
 ブラウザでhttp://localhost:8000/game.html を開く
+
+todo 座標が狂ってきたら画面キャプチャで補正
+https://gemini.google.com/u/1/app/13a99c0837434a29?pageId=none
+
+todo 人間が操作するときはspaceキーを押して自動操作停止，住み分ける
